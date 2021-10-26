@@ -52,9 +52,9 @@ const sections = [
      render() {
          return (
              <div className="directory-menu">
-                 {this.state.sections.map(({title, imageUrl, id, size})=> {
+                 {this.state.sections.map(({id, ...otherSectionProps})=> {
                      return (
-                         <MenuItem key={id} title={title} size={size} imageUrl={imageUrl}/>
+                         <MenuItem key={id} {...otherSectionProps}/>
                      )
                  })}
              </div>
