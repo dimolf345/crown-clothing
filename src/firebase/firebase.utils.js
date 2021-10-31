@@ -1,5 +1,13 @@
 import { initializeApp } from "firebase/app";
-// import { getFirestore, collection, getDocs } from "firebase/firestore";
+import {
+  getFirestore,
+  collection,
+  getDoc,
+  setDoc,
+  addDoc,
+  doc,
+  onSnapshot,
+} from "firebase/firestore";
 import { getAuth, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 
 const firebaseConfig = {
@@ -13,8 +21,10 @@ const firebaseConfig = {
 };
 
 const app = initializeApp(firebaseConfig);
+const db = getFirestore();
 
 export const auth = getAuth();
+
 const provider = new GoogleAuthProvider();
 provider.setCustomParameters({
   prompt: "select_account",
@@ -41,4 +51,41 @@ export const signInWithGoogle = () =>
       // ...
     });
 
+export const createUserProfileDocument = async (userAuth, additionalData) => {
+  // if the userAuth is null, meaning that the user has logged out,
+  // the funcion return
+  if (!userAuth) return;
+  const userRef = doc(db, "users", userAuth.uid);
+  const snapShot = await getDoc(userRef);
+  // if the snapshot don't exist we will add to the db
+  if (!snapShot.exists()) {
+    //   Destructuring user info from userAuth
+    const { displayName, email } = userAuth;
+    const createdAt = new Date();
+
+    try {
+      await setDoc(userRef, {
+        displayName,
+        email,
+        createdAt,
+        ...additionalData,
+      });
+    } catch (error) {
+      console.log("error creating user", error.message);
+    }
+  }
+  //   In any case we will return the userRef because it can be useful
+  return userRef;
+};
+
+export const getUserSnapshot = (refObj, callback) =>
+  onSnapshot(refObj, callback);
+
 export default app;
+
+// (doc) => {
+//   userData = {
+//     id: userAuth.uid,
+//     ...doc.data(),
+//   };
+// };
