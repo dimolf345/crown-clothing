@@ -4,7 +4,8 @@ export const addItemToCart = (cartItems, cartItemToAdd) => {
   const existingCartItem = cartItems.find(
     (cartItem) => cartItem.id === cartItemToAdd.id
   );
-  //if he item is already in  the cart, we modify the quantity property
+  //if he item is already in  the cart, we modify the quantity property,
+  //otherwise we simply return the item.
   if (existingCartItem) {
     return cartItems.map((cartItem) =>
       cartItem.id === cartItemToAdd.id
