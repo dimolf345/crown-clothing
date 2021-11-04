@@ -1,6 +1,5 @@
 import React from 'react';
 import './cart-item.styles.scss'
-import { selectCartItems } from '../../redux/cart/cart.selector';
 
 const CartItem = ({item: {imageUrl, price,name, quantity}}) => (
     <div className="cart-item">
