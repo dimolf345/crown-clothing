@@ -1,12 +1,12 @@
 import { initializeApp } from "firebase/app";
 import {
   getFirestore,
-  collection,
   getDoc,
   setDoc,
-  addDoc,
   doc,
   onSnapshot,
+  collection,
+  writeBatch,
 } from "firebase/firestore";
 import { getAuth, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 
@@ -21,7 +21,7 @@ const firebaseConfig = {
 };
 
 const app = initializeApp(firebaseConfig);
-const db = getFirestore();
+export const db = getFirestore();
 
 export const auth = getAuth();
 
@@ -34,10 +34,10 @@ export const signInWithGoogle = () =>
   signInWithPopup(auth, provider)
     .then((result) => {
       // This gives you a Google Access Token. You can use it to access the Google API.
-      const credential = GoogleAuthProvider.credentialFromResult(result);
-      const token = credential.accessToken;
+      // const credential = GoogleAuthProvider.credentialFromResult(result);
+      // const token = credential.accessToken;
       // The signed-in user info.
-      const user = result.user;
+      // const user = result.user;
       // ...
     })
     .catch((error) => {
@@ -49,6 +49,7 @@ export const signInWithGoogle = () =>
       // The AuthCredential type that was used.
       const credential = GoogleAuthProvider.credentialFromError(error);
       // ...
+      console.log(errorCode, errorMessage, email, credential);
     });
 
 export const createUserProfileDocument = async (userAuth, additionalData) => {
@@ -81,11 +82,44 @@ export const createUserProfileDocument = async (userAuth, additionalData) => {
 export const getUserSnapshot = (refObj, callback) =>
   onSnapshot(refObj, callback);
 
+export const onCollectionSnapshot = (collectionKey, callback) => {
+  const collectionRef = collection(db, collectionKey);
+  return onSnapshot(collectionRef, callback);
+};
 export default app;
 
-// (doc) => {
-//   userData = {
-//     id: userAuth.uid,
-//     ...doc.data(),
-//   };
-// };
+export const addCollectionAndDocuments = async (
+  collectionKey,
+  objectsToAdd
+) => {
+  //select the collection
+  const collectionRef = collection(db, collectionKey);
+  //create a batch in order to perform multiple write at the same time
+  const batch = writeBatch(db);
+  //for each collection category we request the doc to firebase
+  //if the doc does not exists firebase will automatically create
+  // a new document and assign it a random id unless otherwise specified
+  objectsToAdd.forEach((obj) => {
+    const newDocRef = doc(collectionRef);
+    batch.set(newDocRef, obj);
+  });
+
+  return await batch.commit();
+};
+
+export const convertCollectionsSnapshotToMap = (collections) => {
+  const transformedCollection = collections.docs.map((doc) => {
+    const { title, items } = doc.data();
+    return {
+      routeName: encodeURI(title.toLowerCase()),
+      id: doc.id,
+      items,
+      title,
+    };
+  });
+
+  return transformedCollection.reduce((accumulator, collectionObj) => {
+    accumulator[collectionObj.title.toLowerCase()] = collectionObj;
+    return accumulator;
+  }, {});
+};
